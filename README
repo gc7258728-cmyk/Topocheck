@@ -1,0 +1,200 @@
+TOPOCHECK - VERSION CORRIGEE DU CODE FOURNI
+========================================
+Application pedagogique de nivellement geometrique direct pour les
+etudiants en genie civil. Sans authentification ni cle API.
+Ces calculs ne certifient ni un leve ni une conformite reglementaire.
+
+TROIS FICHIERS
+app.py : interface, calculs, styles, schema et exports.
+requirement.text : dependances ; README : documentation.
+Tests, captures, sauvegardes et archives restent hors du dossier.
+Le projet est en memoire de session, sans fichier de donnees persistant.
+
+INSTALLATION WINDOWS
+Ouvrir ce dossier dans VS Code, puis le terminal :
+  python -m pip install -r requirement.text
+  python -m streamlit run app.py
+Developpe et teste avec Python 3.14 et Streamlit 1.65.
+Pour conserver trois fichiers, installer l'environnement virtuel ailleurs.
+
+BIBLIOTHEQUES
+Streamlit : interface, formulaires, session et schema CCv2.
+pandas : carnets et imports CSV/Excel ; NumPy : statistiques et tirages.
+SciPy : loi normale et intervalle binomial exact.
+Plotly : graphiques interactifs ; openpyxl : classeurs .xlsx.
+ReportLab : PDF avec tableaux ; Matplotlib : figures et polices Unicode
+integrees au PDF. Les autres modules appartiennent a Python.
+
+DEMARRAGE
+Le carnet est initialement vide : pas d'insertion automatique de donnees.
+Choisir un Exemple fictif dans le volet lateral, puis Charger le scenario.
+Confirmer le remplacement si un carnet existe deja. Nouveau carnet
+repart d'une saisie vide avec les parametres par defaut.
+Sur telephone, la fleche en haut a gauche ouvre la navigation.
+Les Parametres du leve sont dans le volet lateral. Un bouton Appliquer
+enregistre les changements. Telecharger le Projet JSON pour conserver
+les donnees avant de fermer la session : le cache n'est pas une sauvegarde.
+
+SEPT RUBRIQUES
+- Tableau de bord : profil brut/compense, indicateurs et denivelees.
+- Carnet : tableau editable, nom/groupe facultatif, schema AR/AV dynamique.
+- Fermeture et compensation : poids egaux ou proportionnels aux longueurs.
+- Incertitudes : simulation, histogramme, probabilite, convergence, quantiles.
+- Comparaison : deux precisions avec les memes tirages standardises.
+- Donnees et rapport : modeles, imports et exports CSV/Excel/JSON/PDF.
+- Methode et tests : formules et six cas de reference executables.
+
+SAISIE
+Colonnes : station_id,point_ar,point_av,lecture_ar_m,lecture_av_m,longueur_m
+Les cinq premieres sont obligatoires ; longueur_m est facultative.
+Maximum 100 stations ; identifiants uniques, non vides, <= 40 caracteres.
+Le point AR suivant doit etre le point AV precedent (casse respectee).
+AR/AV : lectures de 0 a 10 m ; avertissement pour 0 ou plus de 5 m.
+Une denivelee negative est normale et indique une descente.
+Longueur : strictement positive et <= 10 000 m, ou cellule vide.
+Ce sont des bornes de saisie pedagogiques, pas des normes.
+La longueur du cheminement n'est ni une lecture ni une portee de visee.
+Le schema ne represente pas l'echelle horizontale ; il peut defiler
+sur un petit ecran. Les lectures partagent une echelle verticale commune.
+Ajouter/supprimer des lignes dans le tableau puis Enregistrer le carnet.
+Les graphiques et exports utilisent le projet ENREGISTRE, pas les cellules
+ou reglages en attente. Une saisie invalide preserve le projet precedent.
+Les exemples fictifs restent identifies comme tels apres modification.
+
+MODES ET CALCULS
+Encadre : reference finale connue obligatoire.
+Boucle : meme nom de point au depart et a l'arrivee ; reference = depart.
+Ouvert : sans reference, donc sans fermeture ni compensation ni risque de
+depassement de fermeture. La dispersion nominale reste calculable.
+Altitude initiale et reference : -500 a 10 000 m.
+Dn = AR - AV ; altitude suivante = altitude precedente + Dn.
+Controle : somme Dn = somme AR - somme AV.
+f = arrivee brute - reference ; fermeture affichee en m et mm.
+Hors tolerance si |f en mm| > tolerance choisie (0.1 a 1 000 mm).
+Stabilisation a 10^-6 mm du seuil contre les arrondis informatiques :
+cela n'est pas une precision de terrain.
+Correction de Dn_j = -f * poids_j / somme(poids).
+Poids egaux : tous a 1. Longueurs : chaque longueur est requise.
+Pas de bascule silencieuse vers une autre methode si une longueur manque.
+Somme corrections = -f ; arrivee compensee = reference.
+La compensation n'efface ni faute grossiere ni biais systematique.
+
+PROBABILITES
+Erreurs normales centrees independantes ; sigma commun aux lectures AR/AV.
+Reperes supposes exacts, sans biais, correlation ou faute grossiere.
+Sigma final = sigma lecture * racine(2 * nombre de stations).
+Sigma 0 a 50 mm, N entier 100 a 50 000, graine entiere >= 0.
+La meme configuration reproduit les memes tirages.
+Les deux precisions utilisent les memes erreurs normales standardisees.
+La simulation porte sur l'arrivee BRUTE, pas sur un resultat certifie
+apres compensation. Reduire sigma ne corrige pas une fermeture nominale :
+si elle depasse le seuil, le risque peut meme augmenter.
+IC final : Clopper-Pearson exact a 95 % pour la probabilite estimee.
+Bande de convergence : Wilson ponctuel, non simultane.
+Les quantiles decrivent les resultats, pas l'IC de la probabilite.
+
+EXEMPLES POUR TESTER
+A. Test 1 : depart 100 m ; AR 1.500 m ; AV 1.200 m ; ref. 100.280 m.
+   Attendus : Dn +0.300 m ; arrivee brute 100.300 m ; fermeture +20 mm ;
+   correction egale -20 mm ; arrivee compensee 100.280 m.
+   Dans le carnet, selectionner S1 pour visualiser les mires et le niveau.
+B. Campus, quatre stations fictives, aucune mesure reelle ENSPY :
+   AR/AV : 1.842/1.120 ; 1.615/.985 ; 1.110/1.540 ; 1.790/1.550 m.
+   Longueurs : 45 ; 60 ; 50 ; 45 m ; depart 100 ; reference 101.150 m.
+   Attendus : Dn total +1.162 m ; arrivee 101.162 m ; fermeture +12 mm.
+   Corrections par longueurs : -2.7 ; -3.6 ; -3.0 ; -2.7 mm.
+   Arrivee compensee 101.150 m ; descente intermediaire a S3.
+C. Tests 2 et 3, boucle de deux stations :
+   AR/AV : 1.500/1.200 puis 1.100/1.400 m, retour au point RN_A.
+   Arrivee 100 m ; fermeture 0 mm. Sigma lecture 2 mm -> sigma final 4 mm.
+   Tolerance 8 mm -> probabilite normale analytique environ 4.55 %.
+   La simulation fluctue autour de cette valeur.
+   Comparaison : variante sigma 1 mm -> sigma final 2 mm ; probabilite
+   analytique environ 0.00633 %. Zero depassement observe avec peu de
+   tirages ne prouve pas un risque nul : consulter l'IC binomial.
+D. Test A, sigma 0 : tous les tirages donnent 100.300 m, dispersion nulle.
+   Avec tolerance 20 mm, risque nul ; avec 19.9 mm, risque 100 %.
+E. Exemple ouvert en descente :
+   Dn -1.070 ; -1.230 ; -.830 m ; depart 725.400 m.
+   Arrivee attendue 722.270 m ; aucune fermeture ni compensation.
+   Sigma lecture 1.5 mm -> sigma final theorique 3.674 mm environ.
+F. Donnees et rapport : exporter puis reimporter le Projet JSON complet.
+   Apercu, confirmation et application : lectures et TOUS les parametres
+   (sigma, variante, N, graine compris) doivent etre restaures.
+   Essayer aussi les modeles et les carnets CSV/Excel exportes.
+   Un import tabulaire conserve les parametres actuels.
+   Il n'infere pas une reference finale a partir des lectures.
+
+IMPORTS ET EXPORTS
+CSV UTF-8, virgule separatrice, point decimal ; Excel .xlsx ; JSON.
+Fichiers limites a 2 Mo ; controles de format, valeurs et continuite.
+Les identifiants tels que 001 restent du texte dans les imports.
+JSON conserve l'origine fictive ou utilisateur. Les anciens JSON a deux
+sigmas AR/AV differents sont refuses explicitement, sans approximation.
+Les formules sont neutralisees dans les exports tabulaires. Un identifiant
+commencant par =, +, - ou @ recoit une apostrophe dans le CSV.
+PDF : Preparer le rapport PDF, puis Telecharger le PDF.
+Un rapport prepare n'est propose que pour sa configuration exacte.
+PDF : tableaux enveloppes et repetes, accents/symboles integres, figures.
+Les donnees sont privees a la session, pas sauvegardees sur le disque.
+
+PRINCIPALES CORRECTIONS
+Validation stricte des nombres, boucles, longueurs et imports.
+Un seul etat du projet pour calculs, simulation, comparaison et rapports.
+Cache borne et indexe par toute la configuration, sans arrondi de cle.
+Tirages en memoire O(N), plutot que O(N x nombre de stations).
+Restauration JSON complete ; textes HTML echappes ; formules neutralisees.
+Fonctions importables sans lancer l'interface ; boutons natifs Streamlit.
+Navigation avec rubrique active, schema SVG CCv2, adaptation mobile.
+
+GITHUB ET STREAMLIT COMMUNITY CLOUD
+Conserver requirement.text dans le dossier livre.
+Cloud attend le nom standard requirements.txt ; requirement.text n'est
+pas reconnu automatiquement comme un fichier de dependances.
+Preparer une copie dans un AUTRE dossier, a cote de topocheck :
+  New-Item -ItemType Directory -Path ..\topocheck-deploiement
+  Copy-Item -LiteralPath app.py -Destination ..\topocheck-deploiement\app.py
+  Copy-Item -LiteralPath README -Destination ..\topocheck-deploiement\README
+  Copy-Item -LiteralPath requirement.text -Destination ..\topocheck-deploiement\requirements.txt
+Cette copie contient trois fichiers ; le dossier livre reste inchange.
+
+Creer un NOUVEAU depot GitHub vide, par exemple topocheck, sans README
+automatique. Ouvrir le dossier topocheck-deploiement dans VS Code :
+  git init
+  git add .
+  git commit -m "Premiere version de TopoCheck"
+  git branch -M main
+  git remote add origin https://github.com/VOTRE_COMPTE/topocheck.git
+  git remote -v
+  git push -u origin main
+Remplacer VOTRE_COMPTE. Ne pas modifier le remote d'une autre application.
+Ces commandes supposent un nouveau depot local et un depot distant vide.
+
+Dans Streamlit Community Cloud, creer une application depuis GitHub :
+depot topocheck, branche main, fichier app.py. Dans Paste URL, utiliser :
+https://github.com/VOTRE_COMPTE/topocheck/blob/main/app.py
+Choisir une version de Python compatible, idealement celle testee en
+local, puis deployer. Si un module manque, verifier requirements.txt dans
+la branche deployee, son contenu et les journaux Manage app.
+Documentation officielle :
+https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies
+
+MISES A JOUR
+Reporter les fichiers modifies dans le dossier de deploiement ; recopier
+requirement.text sous requirements.txt si les dependances changent :
+  git status
+  git add .
+  git commit -m "Correction et amelioration de TopoCheck"
+  git push
+Le Cloud suit les changements de la branche deployee.
+Ne jamais publier mot de passe, jeton ou cle secrete.
+
+VERIFICATIONS
+Six tests de reference executables dans Methode et tests.
+Les tests de developpement sont conserves hors du dossier livre.
+Ils couvrent calculs, validations, simulation, imports/exports et navigation.
+21 tests automatises reussis ; sept rubriques verifiees dans le navigateur
+aux largeurs 1440, 768, 390 et 320 px, sans debordement de la page.
+Rapports de test rendus et inspectes, y compris 100 stations et sigma nul.
+Un test de calcul ne remplace pas un essai terrain ni une validation
+reglementaire. Le deploiement sur votre compte Cloud reste a effectuer.
