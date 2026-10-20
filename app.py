@@ -54,13 +54,9 @@ except ImportError:  # Permet l'import direct des fonctions pour les tests unita
 
 
 # ==============================================================================
-# 1. PALETTE & IDENTITÉ VISUELLE « CARNET DE TERRAIN CONTEMPORAIN »
+# 1. PALETTE DE L'ATELIER ALTIMETRIQUE
 # ==============================================================================
-# Direction visuelle :
-# - Fond gris perle (#F3F4F6), cartes blanches (#FFFFFF), textes anthracite (#1E2229)
-# - Couleur principale : Framboise (#B81D5A)
-# - Accents : Jaune signalétique (#E59A00) et Turquoise (#0D9488)
-# - Aucun fond beige, aucun dégradé décoratif, aucun bandeau vert/bleu ni 4 cartes identiques.
+# Les noms historiques des jetons restent compatibles avec les graphiques PDF.
 
 PALETTE = {
     "bg_pearl": "#F3F4F6",
@@ -69,26 +65,15 @@ PALETTE = {
     "border": "#D5D9E0",
     "anthracite": "#1E2229",
     "text_muted": "#4A515D",
-    "raspberry": "#B81D5A",
-    "raspberry_soft": "#FDF2F6",
-    "turquoise": "#0D9488",
-    "turquoise_soft": "#F0FDFA",
-    "signal_yellow": "#E59A00",
+    "raspberry": "#2459DC",
+    "raspberry_soft": "#EEF3FF",
+    "turquoise": "#C64530",
+    "turquoise_soft": "#FFF1ED",
+    "signal_yellow": "#B38D05",
     "signal_yellow_soft": "#FFFBEB",
     "danger": "#B91C1C",
     "success": "#0F766E",
 }
-
-RUBRIQUES = [
-    "📐 Tableau de bord",
-    "📓 Carnet de nivellement",
-    "⚖️ Fermeture et compensation",
-    "🎲 Incertitudes",
-    "🔍 Comparaison",
-    "💾 Données et rapport",
-    "🧪 Méthode et tests",
-]
-
 
 # ==============================================================================
 # 2. JEUX DE DONNÉES DE RÉFÉRENCE & EXEMPLES PÉDAGOGIQUES
@@ -1119,6 +1104,14 @@ def build_sighting_svg(
     </svg>
     </div>
     """
+    for original, replacement in {
+        '#B81D5A': PALETTE['raspberry'],
+        '#FDF2F6': PALETTE['raspberry_soft'],
+        '#0D9488': PALETTE['turquoise'],
+        '#F0FDFA': PALETTE['turquoise_soft'],
+        '#E59A00': PALETTE['signal_yellow'],
+    }.items():
+        svg = svg.replace(original, replacement)
     return svg.strip()
 
 
@@ -1710,7 +1703,11 @@ def generate_template_excel_bytes() -> bytes:
 
 def export_carnet_csv_bytes(calc_result: Dict[str, Any]) -> bytes:
     """Exporte le carnet complet (brut et compensé) en CSV UTF-8."""
-    df = calc_result["stations_table"].copy()
+    return safe_dataframe_csv(calc_result['stations_table'])
+
+
+def safe_dataframe_csv(frame):
+    df = frame.copy()
     for col in df:
         if pd.api.types.is_string_dtype(df[col]) or df[col].dtype==object:
             df[col]=df[col].map(lambda v:"'"+v if isinstance(v,str) and v.startswith(('=','+','-','@')) else v)
@@ -2367,300 +2364,6 @@ def run_reference_test_suite() -> List[Dict[str, Any]]:
 # 9. STYLES CSS « CARNET DE TERRAIN CONTEMPORAIN » & COMPOSANTS HTML
 # ==============================================================================
 
-def get_custom_css() -> str:
-    """
-    Feuille de style CSS intégrée à app.py.
-    """
-    return """
-    <style>
-      .stApp {
-        background-color: #F3F4F6 !important;
-        color: #1E2229 !important;
-      }
-      section[data-testid="stSidebar"] {
-        background-color: #E8EAEE !important;
-        border-right: 1px solid #CFD4DC !important;
-      }
-
-      /* En-tête compact type carnet d'opérateur */
-      .tc-notebook-header {
-        background-color: #FFFFFF;
-        border: 1px solid #D5D9E0;
-        border-left: 6px solid #B81D5A;
-        border-radius: 6px;
-        padding: 10px 16px;
-        margin-bottom: 10px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-      }
-      .tc-brand-title {
-        font-size: 1.40rem;
-        font-weight: 800;
-        color: #1E2229;
-        letter-spacing: -0.02em;
-        margin: 0;
-      }
-      .tc-brand-badge {
-        background-color: #B81D5A;
-        color: #FFFFFF !important;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 4px;
-        margin-left: 8px;
-        vertical-align: middle;
-      }
-      .tc-brand-sub {
-        font-size: 0.84rem;
-        color: #4A515D;
-        margin: 2px 0 0 0;
-      }
-      .tc-core-question {
-        background-color: #FFFBEB;
-        border: 1px solid #E59A00;
-        color: #1E2229;
-        font-size: 0.83rem;
-        font-weight: 600;
-        padding: 5px 11px;
-        border-radius: 5px;
-      }
-
-      /* Barre de synthèse horizontale compacte sur une seule ligne (non-quad-card) */
-      .tc-summary-strip {
-        background-color: #1E2229;
-        color: #FFFFFF;
-        border-radius: 6px;
-        padding: 8px 14px;
-        margin-bottom: 12px;
-        display: flex;
-        flex-wrap: nowrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        border-bottom: 3px solid #B81D5A;
-      }
-      .tc-strip-item {
-        display: flex;
-        flex-direction: column;
-        padding-right: 10px;
-        border-right: 1px solid #383F4C;
-      }
-      .tc-strip-item:last-child {
-        border-right: none;
-        padding-right: 0;
-      }
-      .tc-strip-label {
-        font-size: 0.68rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        color: #CBD5E1;
-        margin-bottom: 2px;
-      }
-      .tc-strip-val {
-        font-size: 0.88rem;
-        font-weight: 700;
-        color: #FFFFFF;
-      }
-      .tc-pill-ok {
-        background-color: #0D9488;
-        color: #FFFFFF !important;
-        padding: 2px 7px;
-        border-radius: 4px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        display: inline-block;
-      }
-      .tc-pill-warn {
-        background-color: #E59A00;
-        color: #1E2229 !important;
-        padding: 2px 7px;
-        border-radius: 4px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        display: inline-block;
-      }
-      .tc-pill-err {
-        background-color: #B81D5A;
-        color: #FFFFFF !important;
-        padding: 2px 7px;
-        border-radius: 4px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        display: inline-block;
-      }
-
-      /* Cartes de section style carnet de terrain */
-      .tc-panel {
-        background-color: #FFFFFF;
-        border: 1px solid #D5D9E0;
-        border-radius: 6px;
-        padding: 11px 14px;
-        margin-bottom: 10px;
-        font-size: 0.87rem;
-        line-height: 1.45;
-      }
-      .tc-panel-raspberry {
-        background-color: #FDF2F6;
-        border: 1px solid #F5C2D7;
-        border-left: 5px solid #B81D5A;
-        border-radius: 6px;
-        padding: 10px 14px;
-        margin-bottom: 10px;
-        color: #1E2229;
-        font-size: 0.87rem;
-        line-height: 1.45;
-      }
-      .tc-panel-turquoise {
-        background-color: #F0FDFA;
-        border: 1px solid #99F6E4;
-        border-left: 5px solid #0D9488;
-        border-radius: 6px;
-        padding: 10px 14px;
-        margin-bottom: 10px;
-        color: #1E2229;
-        font-size: 0.87rem;
-        line-height: 1.45;
-      }
-      .tc-panel-yellow {
-        background-color: #FFFBEB;
-        border: 1px solid #FDE68A;
-        border-left: 5px solid #E59A00;
-        border-radius: 6px;
-        padding: 10px 14px;
-        margin-bottom: 10px;
-        color: #1E2229;
-        font-size: 0.87rem;
-        line-height: 1.45;
-      }
-
-      /* Rubrique active dans la barre latérale */
-      div[role="radiogroup"] > label {
-        background-color: #FFFFFF;
-        border: 1px solid #D5D9E0;
-        border-radius: 5px;
-        padding: 6px 10px !important;
-        margin-bottom: 5px !important;
-      }
-
-      /* Boutons contrastés framboise bien contenus */
-      .stButton > button, .stDownloadButton > button, .tc-btn {
-        background-color: #B81D5A !important;
-        color: #FFFFFF !important;
-        border: 1px solid #961548 !important;
-        border-radius: 5px !important;
-        font-weight: 600 !important;
-        padding: 7px 12px !important;
-        line-height: 1.35 !important;
-        display: inline-block !important;
-        text-align: center !important;
-      }
-      .stButton > button *, .stDownloadButton > button * {
-        color: #FFFFFF !important;
-      }
-
-      @media (max-width: 900px) {
-        .tc-summary-strip {
-          flex-wrap: wrap;
-          flex-direction: column;
-          align-items: flex-start;
-        }
-        .tc-strip-item {
-          border-right: none;
-          border-bottom: 1px solid #383F4C;
-          padding-bottom: 5px;
-          width: 100%;
-        }
-      }
-    </style>
-    """
-
-
-def render_header_and_summary_strip(
-    project_meta: Dict[str, Any],
-    calc_result: Dict[str, Any],
-    sim_result: Optional[Dict[str, Any]],
-) -> str:
-    """Construit le code HTML de l'en-tête TopoCheck et de la barre de synthèse compacte."""
-    project_meta={key:escape(str(value)) for key,value in project_meta.items()}
-    header_html = f"""
-    <div class="tc-notebook-header">
-      <div>
-        <h1 class="tc-brand-title">TopoCheck</h1>
-        <span class="tc-brand-badge">CARNET ALTIMÉTRIQUE</span>
-        <div class="tc-brand-sub">
-          Nivellement géométrique direct • Calcul d'altitudes, fermeture &amp; incertitudes • <b>{project_meta.get('project_name', '')}</b>
-        </div>
-      </div>
-      <div class="tc-core-question">
-        🎯 « Mes lectures de nivellement permettent-elles de retrouver la bonne altitude ? »
-      </div>
-    </div>
-    """
-
-    if not calc_result.get("is_valid"):
-        strip_html = """
-        <div class="tc-summary-strip">
-          <div class="tc-strip-item">
-            <span class="tc-strip-label">État du carnet</span>
-            <span class="tc-pill-err">Corrections requises dans la saisie</span>
-          </div>
-        </div>
-        """
-        return header_html + strip_html
-
-    regime_short = {
-        "encadre": "Encadré (2 repères)",
-        "boucle": "Boucle fermée (retour Z0)",
-        "ouvert": "Ouvert (sans réf. finale)",
-    }.get(calc_result["regime"], calc_result["regime"])
-
-    if calc_result["fermeture_mm"] is not None:
-        f_mm = calc_result["fermeture_mm"]
-        f_m = calc_result["fermeture_m"]
-        tol = calc_result["tolerance_mm"]
-        if calc_result["is_within_tolerance"]:
-            ferm_badge = f'<span class="tc-pill-ok">|f| = {abs(f_mm):.1f} mm ≤ {tol:.1f} mm</span>'
-        else:
-            ferm_badge = f'<span class="tc-pill-err">|f| = {abs(f_mm):.1f} mm > {tol:.1f} mm</span>'
-    else:
-        ferm_badge = '<span class="tc-pill-warn">Non calculable (ouvert)</span>'
-
-    sigma_txt = (
-        f"&plusmn;{sim_result['sigma_total_analytic_mm']:.2f} mm (&sigma;<sub>L</sub>={sim_result['sigma_mm']:.1f} mm)"
-        if sim_result and sim_result.get("is_valid")
-        else "—"
-    )
-
-    strip_html = f"""
-    <div class="tc-summary-strip">
-      <div class="tc-strip-item">
-        <span class="tc-strip-label">Cheminement &amp; Continuité</span>
-        <span class="tc-strip-val">{regime_short} • {calc_result['n_stations']} st. • OK</span>
-      </div>
-      <div class="tc-strip-item">
-        <span class="tc-strip-label">Départ Z0 &rarr; Arrivée brute</span>
-        <span class="tc-strip-val">{calc_result['z0_m']:.3f} m &rarr; {calc_result['z_fin_brut_m']:.3f} m</span>
-      </div>
-      <div class="tc-strip-item">
-        <span class="tc-strip-label">Dénivelée totale (&Sigma;L_AR &minus; &Sigma;L_AV)</span>
-        <span class="tc-strip-val">{calc_result['sum_denivelees_m']:+.3f} m ({calc_result['sum_denivelees_m']*1000:+.1f} mm)</span>
-      </div>
-      <div class="tc-strip-item">
-        <span class="tc-strip-label">Fermeture f vs Tolérance</span>
-        <span>{ferm_badge}</span>
-      </div>
-      <div class="tc-strip-item">
-        <span class="tc-strip-label">Écart-type analytique &sigma;_Z</span>
-        <span class="tc-strip-val">{sigma_txt}</span>
-      </div>
-    </div>
-    """
-    return header_html + strip_html
-
-
 # ==============================================================================
 # 10. INITIALISATION DE LA SESSION ET APPLICATION PRINCIPALE STREAMLIT
 # ==============================================================================
@@ -2754,7 +2457,7 @@ def navigate(section):st.session_state.tc_view=section
 
 def interactive_chart(fig,key,height=360):
     fig.update_layout(template='plotly_white',height=height,paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#30323c',size=12),colorway=['#B81D5A','#0D9488','#E59A00'],
+        font=dict(color='#27292e',size=12),colorway=['#2459dc','#d8563b','#558563'],
         margin=dict(l=20,r=20,t=25,b=70),legend=dict(orientation='h',y=-.25))
     fig.update_xaxes(automargin=True);fig.update_yaxes(automargin=True)
     st.plotly_chart(fig,key=key,width='stretch',config={'displayModeBar':False})
@@ -2767,38 +2470,6 @@ def interactive_profile(calc):
     if calc['can_compensate']:fig.add_trace(go.Scatter(x=x,y=pts.z_comp_m,text=pts.point,mode='lines+markers',name='Compensé',line=dict(dash='dot'),hovertemplate='%{text}<br>Altitude %{y:.5f} m<extra></extra>'))
     fig.update_layout(xaxis_title='Longueur cumulée (m)' if calc['all_lengths_valid'] else 'Ordre des points',yaxis_title='Altitude (m)')
     return fig
-
-
-def revised_css():
-    return '''<style>
-    [data-testid="stMainBlockContainer"] {max-width:1450px;padding-top:4.2rem}
-    h1,h2,h3,p,.tc-brand-title,.tc-strip-label {letter-spacing:0!important}
-    h2 {font-size:1.4rem!important} h3 {font-size:1.15rem!important}
-    .tc-brand-title {padding:0;line-height:1.3}
-    .tc-notebook-header {border-radius:0;border-top:4px solid #B81D5A}
-    .tc-panel {border-radius:0;box-shadow:none;border:0;border-bottom:1px solid #d5d9e0;background:transparent}
-    .tc-summary-strip {border-radius:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-    .tc-strip-item {min-width:0;overflow-wrap:anywhere}
-    .tc-summary-strip .tc-strip-item:nth-child(n+4) {grid-column:span 1}
-    .tc-svg-frame {max-width:100%;overflow-x:auto}
-    button {border-radius:5px!important} button p {white-space:normal}
-    [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {color:#625b66!important;opacity:1!important}
-    [data-testid="stSidebar"] .stButton > button {width:100%;min-height:40px}
-    .stButton > button[data-testid="stBaseButton-secondary"] {background:#fff!important;color:#30323c!important;border-color:#c6cbd3!important}
-    .stButton > button[data-testid="stBaseButton-secondary"] * {color:#30323c!important}
-    .stButton > button:disabled {opacity:.45!important}
-    .tc-pill-ok {background:#08776e}
-    [data-testid="stForm"] {background:#fff;border-top:3px solid #B81D5A;border-radius:6px}
-    @media(max-width:640px) {
-       [data-testid="stMainBlockContainer"] {padding:4.2rem 1rem 1.5rem}
-       [data-testid="stColumn"] {width:100%;flex:1 1 100%;min-width:0}
-       .tc-summary-strip {grid-template-columns:1fr}
-       .tc-notebook-header {padding:12px}
-       .tc-brand-badge {display:inline-block;margin:5px 0}
-       .tc-core-question {max-width:100%;overflow-wrap:anywhere}
-       input {font-size:16px!important}
-    }
-    </style>'''
 
 
 def editor_view(c,revision):
@@ -2920,11 +2591,774 @@ def data_view(c,calc,sim):
     report=st.session_state.get('tc_report')
     if report and report[0]==project_payload(c):st.download_button('Télécharger le PDF',report[1],file_name='topocheck-rapport.pdf',mime='application/pdf')
     st.caption('CSV UTF-8, séparateur virgule, point décimal. Les imports tabulaires conservent les paramètres actuels. Le JSON restaure tous les paramètres. Les données restent en mémoire de session : téléchargez le JSON pour les conserver.')
+    st.caption('Le PDF et le JSON décrivent le carnet enregistré. Les essais de lecture et courbes de sensibilité sont des ateliers séparés : leurs exports CSV se trouvent dans les outils concernés.')
+
+
+def french_number(value, digits=3):
+    if value is None or not math.isfinite(float(value)):
+        return 'Non disponible'
+    return f'{value:,.{digits}f}'.replace(',', ' ').replace('.', ',')
+
+
+def normal_exceedance(closure_mm, sigma_mm, tolerance_mm):
+    if not finite_number(closure_mm, -1e9, 1e9):
+        raise ValueError('Fermeture nominale invalide.')
+    if not finite_number(sigma_mm, 0, 1e6):
+        raise ValueError('Dispersion invalide.')
+    if not finite_number(tolerance_mm, .1, 1000):
+        raise ValueError('Tolérance entre 0,1 et 1 000 mm requise.')
+    if sigma_mm == 0:
+        return float(exceeds_tolerance(closure_mm, tolerance_mm))
+    lower = stats.norm.cdf((-tolerance_mm-closure_mm)/sigma_mm)
+    upper = stats.norm.sf((tolerance_mm-closure_mm)/sigma_mm)
+    return float(np.clip(lower+upper, 0, 1))
+
+
+def point_precision_table(project):
+    c = validated_project(project)
+    result = calculate_project(project_payload(c))
+    points = result['points_table'].copy()
+    ranks = points['rang'].to_numpy(dtype=float)
+    sigma = c['params']['sigma_mm']*np.sqrt(2*ranks)
+    spread = stats.norm.ppf(.975)*sigma/1000
+    points['sigma_brut_mm'] = sigma
+    points['borne_basse_m'] = points['z_brut_m']-spread
+    points['borne_haute_m'] = points['z_brut_m']+spread
+    return points
+
+
+def descriptive_table(project):
+    result = calculate_project(project_payload(validated_project(project)))
+    source = result['stations_table']
+    rows = []
+    for field, title, unit in [
+        ('lecture_ar_m', 'Lectures arrière', 'm'),
+        ('lecture_av_m', 'Lectures avant', 'm'),
+        ('denivelee_mm', 'Dénivelées', 'mm'),
+        ('longueur_m', 'Longueurs renseignées', 'm'),
+    ]:
+        values = source[field].dropna().to_numpy(dtype=float)
+        rows.append({
+            'Grandeur': title,
+            'Unité': unit,
+            'Effectif': len(values),
+            'Minimum': float(np.min(values)) if len(values) else None,
+            'Moyenne': float(np.mean(values)) if len(values) else None,
+            'Médiane': float(np.median(values)) if len(values) else None,
+            'Maximum': float(np.max(values)) if len(values) else None,
+            'Écart-type descriptif': float(np.std(values, ddof=1)) if len(values) > 1 else None,
+        })
+    return pd.DataFrame(rows)
+
+
+def diagnostic_table(project):
+    c = validated_project(project)
+    result = calculate_project(project_payload(c))
+    frame = result['stations_table']
+    has_reference = result['fermeture_mm'] is not None
+    has_lengths = result['all_lengths_valid']
+    unusual = int(((frame['lecture_ar_m'] == 0) | (frame['lecture_av_m'] == 0)
+                   | (frame['lecture_ar_m'] > 5) | (frame['lecture_av_m'] > 5)).sum())
+    return pd.DataFrame([
+        {'Contrôle': 'Continuité des points', 'État': 'Cohérente',
+         'Constat': f"{len(frame)} stations reliées dans l’ordre enregistré."},
+        {'Contrôle': 'Vérification arithmétique',
+         'État': 'Cohérente' if result['arithmetic_check_ok'] else 'Écart',
+         'Constat': 'Somme AR - somme AV = somme des dénivelées = variation d’altitude.'},
+        {'Contrôle': 'Référence finale', 'État': 'Connue' if has_reference else 'Absente',
+         'Constat': 'Fermeture calculable.' if has_reference else 'Aucun verdict de fermeture possible.'},
+        {'Contrôle': 'Longueurs du cheminement',
+         'État': 'Complètes' if has_lengths else 'Incomplètes',
+         'Constat': 'Abscisses métriques disponibles.' if has_lengths else 'Profil selon le rang des points.'},
+        {'Contrôle': 'Lectures inhabituelles',
+         'État': 'À examiner' if unusual else 'Aucun signal',
+         'Constat': f'{unusual} station(s) avec une lecture nulle ou supérieure à 5 m ; indicateur non normatif.'},
+        {'Contrôle': 'Fermeture / seuil choisi',
+         'État': ('Dans le seuil' if result['is_within_tolerance'] else 'Hors seuil') if has_reference else 'Non évaluable',
+         'Constat': 'Ce diagnostic ne détecte pas toutes les fautes et ne certifie pas le levé.'},
+    ])
+
+
+def reading_experiment(project, station_index, reading, delta_mm):
+    c = validated_project(project)
+    if reading not in ('lecture_ar_m', 'lecture_av_m'):
+        raise ValueError('Choisir une lecture AR ou AV.')
+    if isinstance(station_index, bool) or not isinstance(station_index, (int, np.integer)):
+        raise ValueError('Indice entier requis.')
+    if not 0 <= station_index < len(c['stations']):
+        raise ValueError('Station absente du carnet.')
+    if not finite_number(delta_mm, -1000, 1000):
+        raise ValueError('Modification limitée à ±1 000 mm.')
+    baseline = calculate_project(project_payload(c))
+    draft = copy.deepcopy(c)
+    before = draft['stations'][station_index][reading]
+    draft['stations'][station_index][reading] = before+delta_mm/1000
+    draft = validated_project(draft)
+    modified = calculate_project(project_payload(draft))
+    table = baseline['points_table'][['rang', 'point', 'z_brut_m']].copy()
+    table = table.rename(columns={'z_brut_m': 'altitude_actuelle_m'})
+    table['altitude_essai_m'] = modified['points_table']['z_brut_m']
+    table['effet_mm'] = (table['altitude_essai_m']-table['altitude_actuelle_m'])*1000
+    return {
+        'before': baseline,
+        'after': modified,
+        'reading_before_m': before,
+        'reading_after_m': draft['stations'][station_index][reading],
+        'points': table,
+        'final_change_mm': (modified['z_fin_brut_m']-baseline['z_fin_brut_m'])*1000,
+    }
+
+
+def sensitivity_tables(project, sigma_max, tolerance_max):
+    c = validated_project(project)
+    result = calculate_project(project_payload(c))
+    if result['fermeture_mm'] is None:
+        raise ValueError('Une référence est nécessaire pour étudier le risque de fermeture.')
+    if not finite_number(sigma_max, .1, 50):
+        raise ValueError('Sigma maximal entre 0,1 et 50 mm requis.')
+    if not finite_number(tolerance_max, .2, 1000):
+        raise ValueError('Tolérance maximale entre 0,2 et 1 000 mm requise.')
+    factor = math.sqrt(2*result['n_stations'])
+    closure = result['fermeture_mm']
+    sigmas = np.unique(np.append(np.linspace(0, sigma_max, 61), c['params']['sigma_mm']))
+    tolerances = np.unique(np.append(np.linspace(.1, tolerance_max, 61), c['params']['tolerance_mm']))
+    sigma_rows = [{
+        'sigma_lecture_mm': float(value),
+        'sigma_final_mm': float(value*factor),
+        'risque_pct': 100*normal_exceedance(closure, value*factor, c['params']['tolerance_mm']),
+    } for value in sigmas]
+    tolerance_rows = [{
+        'tolerance_mm': float(value),
+        'risque_pct': 100*normal_exceedance(closure, c['params']['sigma_mm']*factor, value),
+    } for value in tolerances]
+    return pd.DataFrame(sigma_rows), pd.DataFrame(tolerance_rows)
+
+
+def centered_precision_limit(n_stations, tolerance_mm, target_pct):
+    if isinstance(n_stations, bool) or not isinstance(n_stations, (int, np.integer)) or not 1 <= n_stations <= 100:
+        raise ValueError('Entre 1 et 100 stations requises.')
+    if not finite_number(tolerance_mm, .1, 1000):
+        raise ValueError('Tolérance invalide.')
+    if not finite_number(target_pct, .1, 49):
+        raise ValueError('Objectif entre 0,1 % et 49 % requis.')
+    quantile = stats.norm.isf(target_pct/200)
+    return float(tolerance_mm/(quantile*math.sqrt(2*n_stations)))
+
+
+def workbench_css():
+    return '''<style>
+    :root {
+        --tc-ink: #27292e;
+        --tc-blue: #2459dc;
+        --tc-yellow: #f2d45c;
+        --tc-coral: #c64530;
+        --tc-green: #356c48;
+    }
+    .stApp {
+        background: #f4f6f8;
+        color: var(--tc-ink);
+        color-scheme: light;
+    }
+    h1, h2, h3, p, label, button {
+        letter-spacing: 0 !important;
+    }
+    h2 {
+        font-size: 1.55rem !important;
+        line-height: 1.3 !important;
+    }
+    h3 {
+        font-size: 1.15rem !important;
+        line-height: 1.4 !important;
+    }
+    [data-testid="stMainBlockContainer"] {
+        max-width: 1480px;
+        padding-top: 3.7rem;
+        padding-bottom: 3rem;
+    }
+    [data-testid="stSidebar"] {
+        background: #27292e;
+        border-right: 0;
+    }
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] label p,
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+        color: #f5f6f8 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {
+        background: #363940;
+        color: #f5f6f8;
+        border: 1px solid #565a63;
+        justify-content: flex-start;
+    }
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
+        background: #f2d45c;
+        border-color: #f2d45c;
+        color: #27292e;
+        justify-content: flex-start;
+    }
+    [data-testid="stSidebar"] button p {
+        color: inherit !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stExpander"] {
+        background: #35383f;
+        border-color: #666b74;
+    }
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary {
+        color: #f5f6f8 !important;
+        background: #35383f !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+        background: #41464f !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stForm"] {
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] {
+        background: white;
+        border-radius: 5px;
+    }
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] * {
+        color: #27292e;
+    }
+    .tc-masthead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 20px 0;
+        border-top: 5px solid #27292e;
+        border-bottom: 1px solid #ccd2da;
+        margin-bottom: 18px;
+    }
+    .tc-wordmark {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+    }
+    .tc-monogram {
+        display: grid;
+        place-items: center;
+        width: 54px;
+        height: 54px;
+        flex: 0 0 54px;
+        background: #f2d45c;
+        color: #27292e;
+        font-size: 20px;
+        font-weight: 800;
+        border-bottom: 4px solid #27292e;
+    }
+    .tc-masthead h1 {
+        color: #27292e;
+        font-size: 32px;
+        line-height: 1.15;
+        padding: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+    .tc-masthead p {
+        color: #59616c;
+        font-size: 13px;
+        margin: 6px 0 0;
+    }
+    .tc-project-title {
+        text-align: right;
+        min-width: 0;
+        max-width: 45%;
+        overflow-wrap: anywhere;
+        font-size: 14px;
+    }
+    .tc-project-title small {
+        display: block;
+        margin-top: 6px;
+        color: #59616c;
+        font-size: 12px;
+    }
+    .tc-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin: 0 0 24px;
+        background: #fff;
+        border-bottom: 1px solid #ccd2da;
+    }
+    .tc-kpi {
+        min-width: 0;
+        padding: 16px 18px;
+        border-top: 3px solid var(--accent);
+        border-right: 1px solid #e0e4e9;
+    }
+    .tc-kpi span {
+        display: block;
+        font-size: 12px;
+        color: #59616c;
+    }
+    .tc-kpi strong {
+        display: block;
+        font-size: 23px;
+        line-height: 1.4;
+        font-variant-numeric: tabular-nums;
+        margin: 5px 0;
+        overflow-wrap: anywhere;
+    }
+    .tc-kpi small {
+        display: block;
+        color: #59616c;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+    .tc-empty-drawing {
+        background: #e9edf1;
+        border-bottom: 4px solid #2459dc;
+        min-width: 0;
+    }
+    [data-testid="stForm"] {
+        background: #fff;
+        border: 1px solid #ccd2da;
+        border-top: 3px solid #2459dc;
+        border-radius: 6px;
+    }
+    [data-testid="stBaseButton-primary"],
+    [data-testid="stBaseButton-primaryFormSubmit"] {
+        background: #2459dc;
+        border-color: #2459dc;
+        color: #fff;
+    }
+    button {
+        border-radius: 5px !important;
+    }
+    button p {
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+    button:disabled {
+        opacity: .45;
+    }
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] p {
+        color: #555d68 !important;
+        opacity: 1 !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.65rem;
+        overflow-wrap: anywhere;
+    }
+    [data-testid="stMain"] [data-testid="stDataFrame"] {
+        border: 1px solid #d5dae1;
+        border-radius: 4px;
+    }
+    .st-key-quick_actions {
+        padding: 8px 0 14px;
+    }
+    @media (max-width: 1000px) {
+        .tc-kpis {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .tc-project-title {
+            max-width: 40%;
+        }
+    }
+    @media (max-width: 640px) {
+        [data-testid="stMainBlockContainer"] {
+            padding: 3.7rem 1rem 2rem;
+        }
+        .tc-masthead {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 12px;
+            padding: 14px 0;
+        }
+        .tc-masthead h1 {
+            font-size: 27px;
+        }
+        .tc-project-title {
+            text-align: left;
+            max-width: 100%;
+        }
+        .tc-kpi {
+            padding: 12px 9px;
+        }
+        .tc-kpi strong {
+            font-size: 18px;
+        }
+        [data-testid="stColumn"] {
+            min-width: 0;
+            flex: 1 1 100%;
+        }
+        input {
+            font-size: 16px !important;
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            scroll-behavior: auto !important;
+            transition: none !important;
+        }
+    }
+    </style>'''
+
+
+def workspace_header(project, result):
+    name = escape(project['project_name'])
+    origin = escape(project['data_origin'])
+    html = f'''<header class="tc-masthead">
+        <div class="tc-wordmark"><span class="tc-monogram">TC</span>
+        <div><h1>TopoCheck</h1><p>Carnet altimétrique / atelier de nivellement</p></div></div>
+        <div class="tc-project-title"><b>{name}</b><small>{origin}</small></div>
+        </header>'''
+    if result and result['is_valid']:
+        closure = result['fermeture_mm']
+        sigma = project['params']['sigma_mm']*math.sqrt(2*result['n_stations'])
+        items = [
+            ('Arrivée brute', french_number(result['z_fin_brut_m'])+' m',
+             'Départ '+french_number(result['z0_m'])+' m', '#2459dc'),
+            ('Dénivelée totale', french_number(result['sum_denivelees_m'])+' m',
+             f"{result['n_stations']} station(s)", '#d8563b'),
+            ('Fermeture brute', french_number(closure, 2)+' mm' if closure is not None else 'Sans référence',
+             'Seuil choisi ±'+french_number(result['tolerance_mm'], 1)+' mm', '#b38d05'),
+            ('Dispersion théorique', french_number(sigma, 2)+' mm',
+             'Écart-type sur l’arrivée brute', '#356c48'),
+        ]
+        html += '<section class="tc-kpis" aria-label="Synthèse du levé">'
+        for title, value, detail, color in items:
+            html += f'''<div class="tc-kpi" style="--accent:{color}">
+                <span>{escape(title)}</span><strong>{escape(value)}</strong>
+                <small>{escape(detail)}</small></div>'''
+        html += '</section>'
+    st.html(html)
+
+
+def load_worked_case(key):
+    commit_project(project_from_preset(key))
+    st.session_state.tc_view = 'Tableau de bord'
+    st.session_state.tc_flash = 'Exemple fictif chargé.'
+
+
+def empty_dashboard():
+    left, right = st.columns([1, 1.3], gap='large')
+    with left:
+        st.subheader('Aucun levé enregistré')
+        st.metric('Stations', 0)
+        with st.container(horizontal=True, key='quick_actions'):
+            st.button('Exemple : une station', icon=':material/science:',
+                      on_click=load_worked_case, args=('test_simple_1_station',), type='primary')
+            st.button('Créer mon carnet', icon=':material/add:',
+                      on_click=navigate, args=('Carnet de nivellement',))
+    with right:
+        sighting_component(
+            data={'html': build_sighting_svg('Exemple fictif', 'RN0', 'RN1', 1.5, 1.2, 100., 50.)},
+            key='empty_sighting', height='content', width='stretch',
+        )
+        st.caption('Illustration fictive : AR 1,500 m - AV 1,200 m = +0,300 m. Aucun carnet chargé.')
+
+
+def precision_profile(project, show_band=True):
+    result = calculate_project(project_payload(project))
+    frame = point_precision_table(project)
+    x = frame['distance_cumulee_m'] if result['all_lengths_valid'] else frame['rang']
+    fig = go.Figure()
+    if show_band:
+        fig.add_trace(go.Scatter(
+            x=x, y=frame['borne_haute_m'], mode='lines', line=dict(width=0),
+            hoverinfo='skip', showlegend=False,
+        ))
+        fig.add_trace(go.Scatter(
+            x=x, y=frame['borne_basse_m'], mode='lines', line=dict(width=0),
+            fill='tonexty', fillcolor='rgba(36,89,220,.12)',
+            name='Intervalle normal ponctuel 95 %', hoverinfo='skip',
+        ))
+    fig.add_trace(go.Scatter(
+        x=x, y=frame['z_brut_m'], text=frame['point'], mode='lines+markers',
+        name='Altitude brute', line=dict(color='#2459dc', width=3),
+        marker=dict(size=8), hovertemplate='%{text}<br>%{y:.5f} m<extra></extra>',
+    ))
+    if result['can_compensate']:
+        fig.add_trace(go.Scatter(
+            x=x, y=frame['z_comp_m'], mode='lines+markers', name='Altitude compensée',
+            line=dict(color='#d8563b', dash='dot'), marker=dict(symbol='square', size=6),
+            hovertemplate='%{y:.5f} m<extra></extra>',
+        ))
+    fig.update_layout(
+        xaxis_title='Longueur cumulée (m)' if result['all_lengths_valid'] else 'Rang des points',
+        yaxis_title='Altitude (m)',
+    )
+    return fig
+
+
+def dashboard_view(project, result):
+    with st.container(horizontal=True):
+        st.button('Modifier le carnet', icon=':material/edit_note:',
+                  on_click=navigate, args=('Carnet de nivellement',))
+        st.button('Préparer le rapport', icon=':material/picture_as_pdf:',
+                  on_click=navigate, args=('Données et rapport',))
+        show_band = st.toggle('Dispersion théorique', value=True, key='dashboard_band')
+    st.subheader('Profil du cheminement')
+    interactive_chart(precision_profile(project, show_band), 'dashboard_profile', 390)
+    if show_band:
+        st.caption('Bande ponctuelle sur les altitudes brutes, sous erreurs normales indépendantes et départ exact ; pas une bande simultanée ni une incertitude sur la compensation.')
+    if result['fermeture_mm'] is not None:
+        status = st.success if result['is_within_tolerance'] else st.warning
+        status(f"Fermeture {french_number(result['fermeture_mm'], 2)} mm / seuil choisi ±{french_number(result['tolerance_mm'], 1)} mm. Ce contrôle n’est pas une certification.")
+    left, right = st.columns([1.15, 1], gap='large')
+    with left:
+        st.subheader('Dénivelées par station')
+        frame = result['stations_table']
+        fig = go.Figure(go.Bar(
+            x=frame['station_id'], y=frame['denivelee_m'],
+            marker_color=['#2459dc' if x >= 0 else '#d8563b' for x in frame['denivelee_m']],
+            hovertemplate='%{x}<br>%{y:+.4f} m<extra></extra>',
+        ))
+        fig.update_layout(yaxis_title='Dénivelée (m)')
+        interactive_chart(fig, 'dashboard_dn', 290)
+    with right:
+        st.subheader('Bilan du parcours')
+        highest = result['points_table'].loc[result['points_table']['z_brut_m'].idxmax()]
+        lowest = result['points_table'].loc[result['points_table']['z_brut_m'].idxmin()]
+        st.dataframe(pd.DataFrame([
+            {'Indicateur': 'Somme des lectures AR', 'Valeur': french_number(result['sum_ar_m'])+' m'},
+            {'Indicateur': 'Somme des lectures AV', 'Valeur': french_number(result['sum_av_m'])+' m'},
+            {'Indicateur': 'Point le plus haut du carnet', 'Valeur': str(highest['point'])+' / '+french_number(highest['z_brut_m'])+' m'},
+            {'Indicateur': 'Point le plus bas du carnet', 'Valeur': str(lowest['point'])+' / '+french_number(lowest['z_brut_m'])+' m'},
+            {'Indicateur': 'Longueur totale', 'Valeur': french_number(result['total_length_m'], 1)+' m' if result['all_lengths_valid'] else 'Incomplète'},
+        ]), hide_index=True, width='stretch')
+    with st.expander('Diagnostic du carnet', icon=':material/fact_check:'):
+        st.dataframe(diagnostic_table(project), hide_index=True, width='stretch')
+        st.download_button('Diagnostic CSV', safe_dataframe_csv(diagnostic_table(project)),
+                           file_name='topocheck-diagnostic.csv', icon=':material/download:', on_click='ignore')
+    with st.expander('Statistiques des lectures', icon=':material/analytics:'):
+        st.dataframe(descriptive_table(project), hide_index=True, width='stretch')
+        st.caption('Dispersion descriptive entre lectures, différente de l’incertitude de l’appareil. Avec une seule valeur, l’écart-type descriptif n’est pas défini.')
+    with st.expander('Altitudes point par point', icon=':material/table_chart:'):
+        st.dataframe(point_precision_table(project), hide_index=True, width='stretch')
+
+
+def reading_lab_view(project, revision):
+    with st.expander('Laboratoire : modifier une lecture sans changer le carnet', icon=':material/science:'):
+        with st.form(f'reading_lab_{revision}'):
+            station_index = st.selectbox(
+                'Station de l’essai', range(len(project['stations'])),
+                format_func=lambda i: project['stations'][i]['station_id'],
+            )
+            reading = st.selectbox('Lecture à modifier', ['lecture_ar_m', 'lecture_av_m'],
+                                   format_func=lambda value: 'Lecture AR' if value == 'lecture_ar_m' else 'Lecture AV')
+            delta = st.number_input('Modification hypothétique (mm)', -1000., 1000., 5., 1.)
+            submitted = st.form_submit_button('Calculer l’essai', icon=':material/calculate:')
+        if submitted:
+            outcome = reading_experiment(project, station_index, reading, delta)
+            st.session_state.tc_reading_lab = (project_payload(project), station_index, reading, delta, outcome)
+        saved = st.session_state.get('tc_reading_lab')
+        if not saved or saved[0] != project_payload(project):
+            return
+        _, index, field, offset, outcome = saved
+        st.caption(f"Essai enregistré : {project['stations'][index]['station_id']} / {'AR' if field == 'lecture_ar_m' else 'AV'} / {offset:+.1f} mm. Le carnet est inchangé.")
+        cols = st.columns(3)
+        with cols[0]:
+            st.metric('Lecture avant', french_number(outcome['reading_before_m'], 4)+' m')
+        with cols[1]:
+            st.metric('Lecture de l’essai', french_number(outcome['reading_after_m'], 4)+' m')
+        with cols[2]:
+            st.metric('Effet sur l’arrivée brute', french_number(outcome['final_change_mm'], 2)+' mm')
+        st.dataframe(outcome['points'], hide_index=True, width='stretch')
+        st.download_button('Essai CSV', safe_dataframe_csv(outcome['points']),
+                           file_name='topocheck-essai-lecture.csv', icon=':material/download:', on_click='ignore')
+        st.caption('Une hausse de 5 mm en AR relève les points suivants de 5 mm ; en AV, elle les abaisse de 5 mm. Cette expérience ne permet pas d’identifier une faute réelle.')
+
+
+def compensation_view(project, result, revision):
+    with st.form(f'compensation_{revision}'):
+        mode = st.selectbox('Poids de compensation', ['egaux', 'longueurs'],
+                            index=['egaux', 'longueurs'].index(project['params']['comp_mode']))
+        if st.form_submit_button('Appliquer la compensation', icon=':material/balance:'):
+            draft = copy.deepcopy(project)
+            draft['params']['comp_mode'] = mode
+            commit_project(draft)
+            st.rerun()
+    if not result['can_compensate']:
+        st.info('Sans référence finale, ni fermeture ni compensation ne sont calculables.')
+        return
+    frame = result['stations_table']
+    st.warning('Fermer mathématiquement un parcours ne corrige pas les fautes et ne valide pas le levé.')
+    cols = st.columns(3)
+    for col, title, value in zip(cols, ['Fermeture brute', 'Somme des corrections', 'Arrivée compensée'],
+                                 [french_number(result['fermeture_mm'], 2)+' mm',
+                                  french_number(result['sum_corrections_mm'], 2)+' mm',
+                                  french_number(result['z_fin_comp_m'], 4)+' m']):
+        with col:
+            st.metric(title, value)
+    fig = go.Figure(go.Bar(
+        x=frame['station_id'], y=frame['correction_mm'],
+        marker_color='#d8563b', hovertemplate='%{x}<br>%{y:+.3f} mm<extra></extra>',
+    ))
+    fig.update_layout(xaxis_title='Station', yaxis_title='Correction de dénivelée (mm)')
+    interactive_chart(fig, 'compensation_corrections', 300)
+    st.dataframe(frame[['station_id', 'longueur_m', 'part_poids_pct', 'denivelee_m',
+                        'correction_mm', 'denivelee_comp_m', 'z_av_brut_m', 'z_av_comp_m']],
+                 hide_index=True, width='stretch')
+    selection = st.selectbox('Détailler une correction', range(len(frame)),
+                             format_func=lambda i: str(frame.iloc[i]['station_id']))
+    row = frame.iloc[selection]
+    st.markdown(f"**{escape(str(row['station_id']))}** : correction = −fermeture × part du poids = "
+                f"−({french_number(result['fermeture_mm'], 2)}) × {french_number(row['part_poids_pct']/100, 4)} "
+                f"= **{french_number(row['correction_mm'], 3)} mm**.")
+    interactive_chart(interactive_profile(result), 'comp_profile')
+
+
+def sensitivity_view(project, revision):
+    result = calculate_project(project_payload(project))
+    with st.expander('Sensibilité : sigma et tolérance', icon=':material/tune:'):
+        if result['fermeture_mm'] is None:
+            st.info('Sans référence, le risque de fermeture n’est pas défini. La dispersion reste visible dans Incertitudes.')
+            return
+        with st.form(f'sensitivity_{revision}'):
+            left, right = st.columns(2)
+            with left:
+                sigma_max = st.number_input('Sigma maximal exploré (mm)', .1, 50.,
+                                             min(50., max(5., project['params']['sigma_mm']*2)), .5)
+            with right:
+                tol_max = st.number_input('Tolérance maximale explorée (mm)', .2, 1000.,
+                                           min(1000., max(20., project['params']['tolerance_mm']*2)), 1.)
+            submitted = st.form_submit_button('Tracer la sensibilité', icon=':material/show_chart:')
+        if submitted:
+            curves = sensitivity_tables(project, sigma_max, tol_max)
+            st.session_state.tc_sensitivity = (project_payload(project), curves)
+        saved = st.session_state.get('tc_sensitivity')
+        if saved and saved[0] == project_payload(project):
+            by_sigma, by_tol = saved[1]
+            left, right = st.columns(2)
+            with left:
+                st.subheader('Faire varier la précision')
+                fig = go.Figure(go.Scatter(x=by_sigma['sigma_lecture_mm'], y=by_sigma['risque_pct'], mode='lines'))
+                fig.update_layout(xaxis_title='Sigma par lecture (mm)', yaxis_title='Risque analytique (%)', yaxis_range=[0,100])
+                interactive_chart(fig, 'sensitivity_sigma', 310)
+                st.download_button('Sensibilité sigma CSV', safe_dataframe_csv(by_sigma),
+                                   file_name='topocheck-sensibilite-sigma.csv', on_click='ignore', icon=':material/download:')
+            with right:
+                st.subheader('Faire varier le seuil')
+                fig = go.Figure(go.Scatter(x=by_tol['tolerance_mm'], y=by_tol['risque_pct'], mode='lines',
+                                          line=dict(color='#d8563b')))
+                fig.update_layout(xaxis_title='Tolérance pédagogique (mm)', yaxis_title='Risque analytique (%)', yaxis_range=[0,100])
+                interactive_chart(fig, 'sensitivity_tolerance', 310)
+                st.download_button('Sensibilité tolérance CSV', safe_dataframe_csv(by_tol),
+                                   file_name='topocheck-sensibilite-tolerance.csv', on_click='ignore', icon=':material/download:')
+            st.caption('Calcul analytique, sans tirages. Fermeture nominale conservée. Agrandir le seuil réduit le risque calculé, mais ne rend pas les mesures plus précises et ne définit aucune norme.')
+            st.warning('Si la fermeture nominale est déjà hors seuil, diminuer sigma peut augmenter le risque. Le point sigma = 0 est déterministe ; la courbe peut être discontinue à cet endroit.')
+    with st.expander('Précision cible dans un cas idéal centré', icon=':material/target:'):
+        with st.form(f'precision_target_{revision}'):
+            target = st.number_input('Risque cible du cas centré (%)', .1, 49., 5., .5)
+            submitted = st.form_submit_button('Calculer la précision cible', icon=':material/calculate:')
+        if submitted:
+            st.session_state.tc_precision_target = (project_payload(project), target)
+        saved = st.session_state.get('tc_precision_target')
+        if not saved or saved[0] != project_payload(project):
+            return
+        if result['fermeture_mm'] is None:
+            st.info('Définir une référence finale avant ce calcul de fermeture.')
+            return
+        target = saved[1]
+        sigma = centered_precision_limit(result['n_stations'], result['tolerance_mm'], target)
+        actual = normal_exceedance(result['fermeture_mm'], sigma*math.sqrt(2*result['n_stations']), result['tolerance_mm'])
+        st.metric('Sigma maximal par lecture / cas centré', french_number(sigma, 3)+' mm')
+        st.markdown(f"Hypothèse **fermeture nominale nulle** : risque {french_number(target, 1)} %. "
+                    f"Avec la fermeture actuelle conservée, le risque à ce sigma serait **{actual:.2%}**.")
+        st.latex(r'\sigma_L = \frac{T}{\Phi^{-1}(1-p/2)\sqrt{2n}}')
+        st.caption('T en mm ; p est une probabilité entre 0 et 1 ; n est le nombre de stations. Ce calcul ne choisit pas un appareil et ne garantit pas une précision de terrain.')
+
+
+def educational_checks():
+    checks = []
+    def check(name, expected, actual, success):
+        checks.append({'Contrôle': name, 'Attendu': str(expected), 'Obtenu': str(actual), 'Réussi': bool(success)})
+    one = project_from_preset('test_simple_1_station')
+    loop = project_from_preset('test_2_stations_boucle')
+    effect_ar = reading_experiment(one, 0, 'lecture_ar_m', 5)['final_change_mm']
+    effect_av = reading_experiment(one, 0, 'lecture_av_m', 5)['final_change_mm']
+    check('Lecture AR +5 mm', '+5 mm sur arrivée', f'{effect_ar:.6f}', abs(effect_ar-5) < 1e-6)
+    check('Lecture AV +5 mm', '-5 mm sur arrivée', f'{effect_av:.6f}', abs(effect_av+5) < 1e-6)
+    precision = point_precision_table(loop)
+    check('Propagation aux points', '0 ; √8 ; 4 mm', precision['sigma_brut_mm'].round(4).tolist(),
+          np.allclose(precision['sigma_brut_mm'], [0,math.sqrt(8),4]))
+    target_sigma = centered_precision_limit(2, 8., 5.)
+    target_risk = normal_exceedance(0., target_sigma*2, 8.)
+    check('Précision cible centrée', '5 %', f'{target_risk:.8%}', abs(target_risk-.05) < 1e-10)
+    check('Égalité déterministe', '0 %', normal_exceedance(20.,0.,20.), normal_exceedance(20.,0.,20.) == 0)
+    check('Dépassement déterministe', '100 %', normal_exceedance(20.,0.,19.), normal_exceedance(20.,0.,19.) == 1)
+    before = project_payload(one)
+    reading_experiment(one, 0, 'lecture_ar_m', 10)
+    check('Essai non destructif', 'Carnet inchangé', project_payload(one) == before, project_payload(one) == before)
+    return pd.DataFrame(checks)
+
+
+def method_view(project):
+    st.subheader('Un exemple à refaire à la calculatrice')
+    presets = get_preset_datasets()
+    selected = st.selectbox('Exercice expliqué', list(presets),
+                            format_func=lambda key: presets[key]['label'])
+    case = project_from_preset(selected)
+    result = calculate_project(project_payload(case))
+    frame = result['stations_table']
+    st.badge('Exemple fictif', icon=':material/science:', color='orange')
+    st.dataframe(frame[['station_id','lecture_ar_m','lecture_av_m','denivelee_m','z_av_brut_m']],
+                 hide_index=True, width='stretch')
+    first = frame.iloc[0]
+    st.markdown(f"**Première station :** {french_number(first['lecture_ar_m'])} − "
+                f"{french_number(first['lecture_av_m'])} = **{french_number(first['denivelee_m'])} m**.")
+    st.markdown(f"**Arrivée brute du parcours :** {french_number(result['z0_m'])} + "
+                f"({french_number(result['sum_denivelees_m'])}) = **{french_number(result['z_fin_brut_m'])} m**.")
+    if result['fermeture_mm'] is not None:
+        st.markdown(f"**Fermeture :** ({french_number(result['z_fin_brut_m'])} − "
+                    f"{french_number(result['z_ref_used_m'])}) × 1 000 = **{french_number(result['fermeture_mm'], 2)} mm**.")
+    else:
+        st.info('Aucune référence finale : on calcule l’altitude, pas une fermeture.')
+    replace = st.checkbox('Autoriser le remplacement pour cet exercice', key='worked_replace')
+    st.button('Charger cet exercice', icon=':material/science:', on_click=load_worked_case,
+              args=(selected,), disabled=bool(project['stations']) and not replace)
+    with st.expander('Formules et vocabulaire', icon=':material/functions:'):
+        st.markdown('**AR / AV** : lectures sur mire, pas altitudes. **Dénivelée** : AR − AV. **Fermeture** : arrivée brute − référence. **Compensation** : répartition de −f sur les stations.')
+        st.markdown('**Écart-type** : dispersion supposée, pas erreur maximale. **Quantile** : seuil dans une distribution. **Probabilité** : proportion de cas prévue par le modèle.')
+        st.latex(r'\sigma_{Z_i}=\sigma_L\sqrt{2i}')
+        st.markdown('Erreurs normales indépendantes, repères exacts ; aucun biais systématique ni faute grossière. Les bandes du profil portent sur le résultat brut et sont ponctuelles.')
+    with st.expander('Vérifier ma compréhension', icon=':material/quiz:'):
+        with st.form('understanding_quiz'):
+            q1 = st.radio('AR = 1,50 m et AV = 1,20 m :', ['Montée de 30 cm', 'Descente de 30 cm', 'Montée de 3 m'], index=None)
+            q2 = st.radio('Une compensation qui ferme le parcours :', ['Prouve que toutes les mesures sont justes', 'Répartit un écart sans identifier sa cause'], index=None)
+            q3 = st.radio('Un parcours sans référence finale donne :', ['Un risque de fermeture nul', 'Une fermeture non calculable'], index=None)
+            q4 = st.radio('Même graine et mêmes paramètres :', ['Mêmes tirages dans cet environnement', 'Mesures plus précises sur le terrain'], index=None)
+            submitted = st.form_submit_button('Vérifier mes réponses', icon=':material/check:')
+        if submitted:
+            answers = [q1,q2,q3,q4]
+            if any(value is None for value in answers):
+                st.warning('Répondre aux quatre questions.')
+            else:
+                correct = ['Montée de 30 cm', 'Répartit un écart sans identifier sa cause',
+                           'Une fermeture non calculable', 'Mêmes tirages dans cet environnement']
+                st.session_state.tc_quiz = [value == answer for value,answer in zip(answers,correct)]
+        if 'tc_quiz' in st.session_state:
+            flags = st.session_state.tc_quiz
+            st.metric('Réponses correctes', f'{sum(flags)} / 4')
+            st.dataframe(pd.DataFrame({'Question':[1,2,3,4], 'Correct':flags,
+                                       'Explication':['AR − AV = +0,30 m.', 'La compensation ne prouve pas la justesse.',
+                                                      'Sans référence, absence de verdict, pas risque nul.',
+                                                      'La graine reproduit les tirages, pas les mesures.']}), hide_index=True, width='stretch')
+    st.subheader('Tests de référence')
+    if st.button('Exécuter les tests de référence', icon=':material/task_alt:'):
+        st.session_state.tc_checks = run_reference_test_suite()
+        st.session_state.tc_educational_checks = educational_checks()
+    if 'tc_checks' in st.session_state:
+        tests = st.session_state.tc_checks
+        st.dataframe(pd.DataFrame(tests), hide_index=True, width='stretch')
+        if all(row['passed'] for row in tests):
+            st.success(f'{len(tests)} tests de référence réussis.')
+    if 'tc_educational_checks' in st.session_state:
+        st.dataframe(st.session_state.tc_educational_checks, hide_index=True, width='stretch')
+    st.caption('Outil pédagogique, sans validation professionnelle ou réglementaire. Aucun coefficient ou seuil présenté ici ne constitue une norme de terrain.')
 
 
 def main():
-    st.set_page_config(page_title='TopoCheck · Version corrigée',page_icon=':material/straighten:',layout='wide')
-    st.html(get_custom_css());st.html(revised_css())
+    st.set_page_config(page_title='TopoCheck | Atelier de nivellement',page_icon=':material/straighten:',layout='wide')
+    st.html(workbench_css())
     st.session_state.setdefault('tc_project',new_project())
     c=copy.deepcopy(st.session_state.tc_project);revision=st.session_state.get('tc_revision',0)
     view=st.session_state.get('tc_view',SECTIONS[0])
@@ -2941,46 +3375,28 @@ def main():
             st.button('Nouveau carnet',icon=':material/note_add:',disabled=bool(c['stations']) and not replace,on_click=reset_project,width='stretch')
         parameters_form(c,revision)
         calc=calculate_project(project_payload(c)) if c['stations'] else None
-        sim=simulate_project(project_payload(c)) if calc and calc['is_valid'] else None
-        if calc:
-            st.html(render_header_and_summary_strip(c,calc,sim))
-        else:st.html('<header class="tc-notebook-header"><h1 class="tc-brand-title">TopoCheck</h1><p>Nivellement géométrique — carnet vide</p></header>')
+        sim=None
+        if calc and calc['is_valid'] and view in ('Incertitudes','Comparaison','Données et rapport'):
+            sim=simulate_project(project_payload(c))
+        workspace_header(c,calc)
         st.subheader(view)
         st.caption(c['project_name']+' · '+c['data_origin'])
         if 'tc_flash' in st.session_state:st.success(st.session_state.pop('tc_flash'))
-        if view=='Carnet de nivellement':editor_view(c,revision)
+        if view=='Carnet de nivellement':
+            editor_view(c,revision)
+            if c['stations']:reading_lab_view(c,revision)
         elif view=='Données et rapport':data_view(c,calc,sim)
-        elif view=='Méthode et tests':
-            st.markdown('**Dénivelée = AR − AV.** Altitude suivante = altitude précédente + dénivelée. Fermeture = arrivée brute − référence. La compensation répartit −f, sans corriger les fautes.')
-            st.markdown('**Sigma final = sigma lecture × √(2 × nombre de stations).** Modèle indépendant, repères exacts ; aucune validation normative.')
-            if st.button('Exécuter les tests de référence',icon=':material/task_alt:'):st.session_state.tc_checks=run_reference_test_suite()
-            if 'tc_checks' in st.session_state:
-                tests=st.session_state.tc_checks;st.dataframe(pd.DataFrame(tests),hide_index=True,width='stretch')
-                if all(r['passed'] for r in tests):st.success(f'{len(tests)} tests de référence réussis.')
+        elif view=='Méthode et tests':method_view(c)
         elif not calc:
-            st.info('Aucune donnée enregistrée. Chargez volontairement un scénario fictif ou créez votre carnet.')
-            st.button('Créer mon carnet',icon=':material/add:',type='primary',on_click=navigate,args=('Carnet de nivellement',))
+            empty_dashboard()
         elif not calc['is_valid']:
             st.error(' '.join(calc['validation']['errors']))
-        elif view=='Fermeture et compensation':
-            with st.form(f'compensation_{revision}'):
-                mode=st.selectbox('Poids de compensation',['egaux','longueurs'],index=['egaux','longueurs'].index(c['params']['comp_mode']))
-                if st.form_submit_button('Appliquer la compensation',icon=':material/balance:'):
-                    draft=copy.deepcopy(c);draft['params']['comp_mode']=mode;commit_project(draft);st.rerun()
-            if not calc['can_compensate']:st.info('Sans référence finale, ni fermeture ni compensation ne sont calculables.')
-            else:
-                st.warning('La compensation est pédagogique ; elle ne supprime pas une faute et ne certifie pas le levé.')
-                st.dataframe(calc['stations_table'][['station_id','denivelee_m','correction_mm','denivelee_comp_m','z_av_brut_m','z_av_comp_m']],hide_index=True,width='stretch')
-                interactive_chart(interactive_profile(calc),'comp_profile')
+        elif view=='Fermeture et compensation':compensation_view(c,calc,revision)
         elif view=='Incertitudes':uncertainties_view(c,calc,sim,revision)
-        elif view=='Comparaison':comparison_view(c,sim,revision)
-        else:
-            interactive_chart(interactive_profile(calc),'dashboard_profile',410)
-            if calc['fermeture_mm'] is not None:
-                (st.success if calc['is_within_tolerance'] else st.warning)(f"Fermeture brute {calc['fermeture_mm']:+.2f} mm pour une tolérance pédagogique de ±{calc['tolerance_mm']:.1f} mm. Ce contrôle ne certifie pas le levé.")
-            table=calc['stations_table']
-            interactive_chart(go.Figure(go.Bar(x=table.station_id,y=table.denivelee_m)).update_layout(yaxis_title='Dénivelée (m)'),'dashboard_dn',280)
-            st.dataframe(calc['points_table'],hide_index=True,width='stretch')
+        elif view=='Comparaison':
+            comparison_view(c,sim,revision)
+            sensitivity_view(c,revision)
+        else:dashboard_view(c,calc)
         if calc:
             for warning in calc['validation']['warnings']:st.caption(warning)
     except (ValueError,TypeError,KeyError,UnicodeError) as exc:
